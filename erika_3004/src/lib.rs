@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::fs::File;
-use std::io::Result as IOResult;
+use std::io;
 use std::io::{Read, Write};
-use std::path::Path;
+
+use serial::prelude::*;
 
 #[repr(u8)]
 pub enum BoudRate {
@@ -24,16 +24,12 @@ pub enum PaperStep {
 
 #[repr(u8)]
 pub enum ControlCode {
-    Space = 0x71,
-    Backspace,
-    HalfstepRight,
-    HalfstepLeft,
-    HalfstepDown,
-    HalfstepUp,
-    Newline,
-    CarriageReturn,
-    HorizontabTab,
-    TabSet,
+    // numbers before here are covered by the text codec
+    HalfstepRight = 0x73,
+    HalfstepLeft = 0x74,
+    HalfstepDown = 0x75,
+    HalfstepUp = 0x76,
+    TabSet = 0x7a,
     TabDel,
     TabAllDel,
     TabStandard,
@@ -84,55 +80,52 @@ pub enum ControlCode {
 }
 
 pub struct TypewriterInterface {
-    file: File,
+    file: serial::SystemPort,
 }
 
 impl TypewriterInterface {
-    pub fn new(device: &Path) -> IOResult<TypewriterInterface> {
-        Ok(TypewriterInterface {
-            file: File::open(device)?,
-        })
+    pub fn new(device: &str) -> io::Result<TypewriterInterface> {
+        let mut port = serial::open(device)?;
+        port.reconfigure(&|settings| {
+            settings.set_baud_rate(serial::Baud1200)?;
+            settings.set_char_size(serial::Bits8);
+            Ok(())
+        })?;
+
+        Ok(TypewriterInterface { file: port })
     }
 
-    fn write(&mut self, code: ControlCode) -> IOResult<()> {
-        self.file.write(&[code as u8, 'H' as u8])?;
+    pub fn write(&mut self, data: &[u8]) -> io::Result<()> {
+        self.file.write(data)?;
         Ok(())
     }
 
-    pub fn read(&mut self) -> IOResult<Vec<u8>> {
-        let mut buf = Vec::<u8>::new();
-        self.file.read(&mut buf)?;
-        Ok(buf)
+    pub fn write_unicode(&mut self, text: &str) -> io::Result<()> {
+        self.write(&gdrascii_codec::encode(text))
     }
 
-    pub fn send_space(&mut self) -> IOResult<()> {
-        self.write(ControlCode::Space)?;
+    fn send_control(&mut self, code: ControlCode) -> io::Result<()> {
+        self.write(&[code as u8])?;
         Ok(())
     }
 
-    pub fn send_backspace(&mut self) -> IOResult<()> {
-        self.write(ControlCode::Backspace)?;
+    pub fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.file.read(buf)
+    }
+
+    pub fn bell(&mut self) -> io::Result<()> {
+        self.send_control(ControlCode::Bell)?;
         Ok(())
     }
 
-    pub fn send_bell(&mut self) -> IOResult<()> {
-        self.write(ControlCode::Bell)?;
-        Ok(())
-    }
-
-    pub fn send_set_tab_size(&mut self, strength: u8) -> IOResult<()> {
-        self.write(ControlCode::TabStep)?;
+    pub fn set_tab_size(&mut self, strength: u8) -> io::Result<()> {
+        self.send_control(ControlCode::TabStep)?;
         self.file.write(&[strength])?;
         Ok(())
     }
 
-    pub fn send_newline(&mut self) -> IOResult<()> {
-        self.write(ControlCode::Newline)?;
-        Ok(())
-    }
-
-    pub fn send_move_paper(&mut self, step: PaperStep) -> IOResult<()> {
-        self.write(ControlCode::MovePaper)?;
+    pub fn move_paper(&mut self, step: PaperStep) -> io::Result<()> {
+        self.send_control(ControlCode::MovePaper)?;
         self.file.write(&[step as u8])?;
         Ok(())
     }
