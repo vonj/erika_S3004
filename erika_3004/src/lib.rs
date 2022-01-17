@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2022 Jonah Brüchert <jbb@kaidan.im>
+//
+// SPDX-License-Identifier: EUPL-1.2
+
 use std::fs::File;
 use std::io::Result as IOResult;
 use std::io::{Read, Write};
