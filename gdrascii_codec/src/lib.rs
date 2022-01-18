@@ -324,7 +324,10 @@ pub fn encode(text: &str) -> Vec<u8> {
 /// Decode a single character.
 /// This can handle multi-byte characters, but the sequence always needs to represent just one single character.
 pub fn decode_char(character: &[u8]) -> EncodingResult<char> {
-    GDR_ASCII_TO_UTF8.get(&character).cloned().ok_or(EncodingError::InvalidInput)
+    GDR_ASCII_TO_UTF8
+        .get(&character)
+        .cloned()
+        .ok_or(EncodingError::InvalidInput)
 }
 
 /// Decode bytes into a string.
@@ -362,14 +365,13 @@ pub fn decode(text: &[u8]) -> EncodingResult<String> {
 
 mod test {
     #[test]
-    fn encode_hello_world() {
+    fn encode_hello_world() -> crate::EncodingResult<()> {
         use crate::try_encode;
 
-        let encoded = try_encode("Hello World");
-        assert_eq!(
-            encoded.unwrap(),
-            b"\x12\x5A\x4D\x4D\x5E\x71\x2D\x5E\x59\x4D\x53"
-        );
+        let encoded = try_encode("Hello World")?;
+        assert_eq!(encoded, b"\x12\x5A\x4D\x4D\x5E\x71\x2D\x5E\x59\x4D\x53");
+
+        Ok(())
     }
 
     #[test]
@@ -392,12 +394,13 @@ mod test {
     }
 
     #[test]
-    fn decode_test() {
+    fn decode_test() -> crate::EncodingResult<()> {
         use crate::decode;
 
         let decoded =
-            decode(b"\x12\x5A\x4D\x4D\x5E\x71\x20\x72\x2E\x71\x2D\x5E\x59\x4D\x53\x29\x71");
-        assert_eq!(decoded.unwrap(), "Hello € World´",);
+            decode(b"\x12\x5A\x4D\x4D\x5E\x71\x20\x72\x2E\x71\x2D\x5E\x59\x4D\x53\x29\x71")?;
+        assert_eq!(decoded, "Hello € World´");
+        Ok(())
     }
 
     #[test]
@@ -409,7 +412,7 @@ mod test {
     }
 
     #[test]
-    fn encode_decode_lorem_ipsum() {
+    fn encode_decode_lorem_ipsum() -> crate::EncodingResult<()> {
         use crate::{decode, encode};
 
         // This is a normal Lorem ipsum text with some multi-byte characters hidden in it,
@@ -425,7 +428,24 @@ Vel eros donec ac odio tempor orci dapibus ultrices in. Nunc sed blandit libero 
 Massa vitae tortor condimentum lacinia quis vel. Ullamcorper malesuada proin libero nunc consequat interdum varius sit. Dui faucibus in ornare quam viverra. Egestas diam in arcu cursus euismod quis viverra. Hac habitasse platea dictumst quisque sagittis. Integer enim neque volutpat ac tincidunt vitae semper quis. Eleifend donec pretium vulputate sapien nec sagittis. Risus pretium quam vulputate dignissim suspendisse in est. Scelerisque fermentum dui faucibus in. Facilisis volutpat est velit egestas dui. Aliquam eleifend mi in nulla posuere sollicitudin aliquam ultrices. Faucibus in ornare quam viverra orci sagittis eu volutpat. Proin sagittis nisl rhoncus mattis rhoncus urna neque viverra.";
 
         let encoded = encode(example_text);
-        let decoded = decode(&encoded).unwrap();
+        let decoded = decode(&encoded)?;
         assert_eq!(decoded, example_text);
+        Ok(())
+    }
+
+    #[test]
+    fn decode_char() -> crate::EncodingResult<()> {
+        use crate::decode_char;
+
+        let c = decode_char(b"\x20\x72\x2E")?;
+        assert_eq!(c, '€');
+
+        let c = decode_char(b"\x254");
+        assert!(matches!(c, Err(crate::EncodingError::InvalidInput)));
+
+        let c = decode_char(b"");
+        assert!(matches!(c, Err(crate::EncodingError::InvalidInput)));
+
+        Ok(())
     }
 }
