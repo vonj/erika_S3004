@@ -286,10 +286,8 @@ pub fn encode_char(character: char) -> Option<&'static [u8]> {
 /// Encode a string.
 /// Returns an Ok Result if all characters could be represented in the text coded, otherwise returns an Err.
 pub fn try_encode(text: &str) -> EncodingResult<Vec<u8>> {
-    let mut out = Vec::<u8>::new();
-
     // This is only an approximation, GDR encoding is sometimes longer
-    out.reserve(text.len());
+    let mut out = Vec::<u8>::with_capacity(text.len());
 
     for c in text.chars() {
         match UTF8_TO_GDR_ASCII.get(&c) {
@@ -305,10 +303,8 @@ pub fn try_encode(text: &str) -> EncodingResult<Vec<u8>> {
 /// If characters could not be encoded, a questionmark character is written instead.
 /// This function always succeeds.
 pub fn encode(text: &str) -> Vec<u8> {
-    let mut out = Vec::<u8>::new();
-
     // This is only an approximation, GDR encoding is sometimes longer
-    out.reserve(text.len());
+    let mut out = Vec::<u8>::with_capacity(text.len());
 
     for c in text.chars() {
         let encoded = match UTF8_TO_GDR_ASCII.get(&c) {
@@ -332,10 +328,8 @@ pub fn decode_char(character: &[u8]) -> Option<char> {
 /// This function never fails if the input is valid, that means only contains sequences defined in the decoding.
 /// If that is not the case, it returns an Err.
 pub fn decode(text: &[u8]) -> EncodingResult<String> {
-    let mut out = String::new();
-
     // Approximation of the expected required size
-    out.reserve((text.len() as f32 * 0.95) as usize);
+    let mut out = String::with_capacity((text.len() as f32 * 0.95) as usize);
 
     let mut i = 0;
     let input_len = text.len();
