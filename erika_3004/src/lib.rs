@@ -7,6 +7,7 @@ use std::io::{Read, Write};
 
 use serial::prelude::*;
 
+/// Boud rates supported by the typewriter
 #[repr(u8)]
 pub enum BoudRate {
     Rate1200 = 10,
@@ -16,12 +17,14 @@ pub enum BoudRate {
     Rate19200 = 1,
 }
 
+/// Possible steps to move the paper by
 #[repr(u8)]
 pub enum PaperStep {
     Step1,
     Step2,
 }
 
+/// Possible control codes to send
 #[repr(u8)]
 pub enum ControlCode {
     // numbers before here are covered by the text codec
@@ -114,7 +117,7 @@ impl TypewriterInterface {
         let mut buf = Vec::<u8>::with_capacity(3); // 3 is the maximum number of bytes used for a multi-byte character
         if let Ok(size) = self.read(&mut buf) {
             if size > 0 {
-                if let Some(text) = gdrascii_codec::decode_char(&buf[0..size]) {
+                if let Ok(text) = gdrascii_codec::decode_char(&buf[0..size]) {
                     return Some(text);
                 }
             }

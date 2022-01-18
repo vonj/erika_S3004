@@ -269,9 +269,12 @@ static GDR_ASCII_TO_UTF8: phf::Map<&[u8], char> = phf_map! {
     b"\x20\x72\x2E" => '€'
 };
 
+/// Errors that can happen while encoding or decoding
 #[derive(Debug)]
 pub enum EncodingError {
+    /// The character is not representable in the target codec
     UnrepresentableCharacter,
+    /// The input is not valid data encoded in the source codec and can't be decoded.
     InvalidInput,
 }
 
@@ -320,8 +323,8 @@ pub fn encode(text: &str) -> Vec<u8> {
 
 /// Decode a single character.
 /// This can handle multi-byte characters, but the sequence always needs to represent just one single character.
-pub fn decode_char(character: &[u8]) -> Option<char> {
-    GDR_ASCII_TO_UTF8.get(&character).cloned()
+pub fn decode_char(character: &[u8]) -> EncodingResult<char> {
+    GDR_ASCII_TO_UTF8.get(&character).cloned().ok_or(EncodingError::InvalidInput)
 }
 
 /// Decode bytes into a string.
@@ -335,27 +338,23 @@ pub fn decode(text: &[u8]) -> EncodingResult<String> {
     let input_len = text.len();
     while i < input_len {
         if i + 3 <= input_len {
-            if let Some(character) = decode_char(&text[i..i + 3]) {
+            if let Ok(character) = decode_char(&text[i..i + 3]) {
                 out.push(character);
                 i += 3;
                 continue;
             }
         }
         if i + 2 <= input_len {
-            if let Some(character) = decode_char(&text[i..i + 2]) {
+            if let Ok(character) = decode_char(&text[i..i + 2]) {
                 out.push(character);
                 i += 2;
                 continue;
             }
         }
 
-        match decode_char(&text[i..i + 1]) {
-            Some(c) => {
-                out.push(c);
-                i += 1;
-            }
-            None => return Err(EncodingError::InvalidInput),
-        }
+        let c = decode_char(&text[i..i + 1])?;
+        out.push(c);
+        i += 1;
     }
 
     Ok(out)
