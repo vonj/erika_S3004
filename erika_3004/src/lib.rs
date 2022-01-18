@@ -113,6 +113,19 @@ impl TypewriterInterface {
         self.file.read(buf)
     }
 
+    pub fn read_character(&mut self) -> Option<char> {
+        let mut buf = Vec::<u8>::with_capacity(3); // 3 is the maximum number of bytes used for a multi-byte character
+        if let Ok(size) = self.read(&mut buf) {
+            if size > 0 {
+                if let Some(text) = gdrascii_codec::decode_char(&buf[0..size]) {
+                    return Some(text);
+                }
+            }
+        }
+
+        None
+    }
+
     pub fn bell(&mut self) -> io::Result<()> {
         self.send_control(ControlCode::Bell)?;
         Ok(())

@@ -11,13 +11,8 @@ const SERIAL_DEVICE: &str = "/dev/ttyUSB0";
 fn main() -> io::Result<()> {
     let mut interface = TypewriterInterface::new(SERIAL_DEVICE)?;
     loop {
-        let mut buf = Vec::<u8>::with_capacity(3); // 3 is the maximum number of bytes used for a multi-byte character
-        if let Ok(size) = interface.read(&mut buf) {
-            if size > 0 {
-                if let Some(text) = gdrascii_codec::decode_char(&buf[0..size]) {
-                    println!("{}", text);
-                }
-            }
+        if let Some(character) = interface.read_character() {
+            print!("{}", character);
         }
     }
 }
