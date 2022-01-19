@@ -2,6 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+#![no_std]
+
+extern crate alloc;
+use alloc::{vec::Vec,string::String};
+
 extern crate phf;
 
 use phf::phf_map;

@@ -15,7 +15,7 @@ fn main() -> io::Result<()> {
             use erika_3004::InputEvent::*;
             match character {
                 ControlCode(code) => println!("{:?}", code),
-                Character(character) => print!("{}", character)
+                Character(character) => print!("{}", character),
             }
         }
     }
