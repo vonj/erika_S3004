@@ -12,7 +12,11 @@ fn main() -> io::Result<()> {
     let mut interface = TypewriterInterface::new(SERIAL_DEVICE)?;
     loop {
         if let Some(character) = interface.read_character() {
-            print!("{}", character);
+            use erika_3004::InputEvent::*;
+            match character {
+                ControlCode(code) => println!("{:?}", code),
+                Character(character) => print!("{}", character)
+            }
         }
     }
 }

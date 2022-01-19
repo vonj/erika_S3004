@@ -7,6 +7,10 @@ use std::io::{Read, Write};
 
 use serial::prelude::*;
 
+use num_enum::TryFromPrimitive;
+
+use gdrascii_codec::EncodingError;
+
 /// Boud rates supported by the typewriter
 #[repr(u8)]
 pub enum BoudRate {
@@ -26,6 +30,7 @@ pub enum PaperStep {
 
 /// Possible control codes to send
 #[repr(u8)]
+#[derive(TryFromPrimitive, Debug)]
 pub enum ControlCode {
     // numbers before here are covered by the text codec
     HalfstepRight = 0x73,
@@ -82,6 +87,12 @@ pub enum ControlCode {
     Relocate,
 }
 
+/// Classification of an input event
+pub enum InputEvent {
+    ControlCode(ControlCode),
+    Character(char),
+}
+
 /// Interface for receiving and sending text to the typewriter
 pub struct TypewriterInterface {
     file: serial::SystemPort,
@@ -113,13 +124,21 @@ impl TypewriterInterface {
     }
 
     /// Read a character from a serial device. The character is decoded along the way.
-    pub fn read_character(&mut self) -> Option<char> {
+    pub fn read_character(&mut self) -> Option<InputEvent> {
         let mut buf = Vec::<u8>::with_capacity(3); // 3 is the maximum number of bytes used for a multi-byte character
         if let Ok(size) = self.read(&mut buf) {
             if size > 0 {
-                if let Ok(text) = gdrascii_codec::decode_char(&buf[0..size]) {
-                    return Some(text);
-                }
+                return match gdrascii_codec::decode_char(&buf[0..size]) {
+                    Ok(text) => Some(InputEvent::Character(text)),
+                    Err(EncodingError::InvalidInput) => {
+                        let byte = buf[0].try_into();
+                        match byte {
+                            Ok(control_code) => Some(InputEvent::ControlCode(control_code)),
+                            Err(_) => unreachable!("Data received should either be in the codec range or a control code. Code was {}", buf[0])
+                        }
+                    }
+                    _ => None,
+                };
             }
         }
 
