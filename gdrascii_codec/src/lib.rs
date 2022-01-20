@@ -5,7 +5,7 @@
 #![no_std]
 
 extern crate alloc;
-use alloc::{vec::Vec,string::String};
+use alloc::{string::String, vec::Vec};
 
 extern crate phf;
 
