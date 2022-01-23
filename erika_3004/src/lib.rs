@@ -105,6 +105,7 @@ impl TypewriterInterface {
         port.reconfigure(&|settings| {
             settings.set_baud_rate(serial::Baud1200)?;
             settings.set_char_size(serial::Bits8);
+            settings.set_flow_control(serial::FlowControl::FlowHardware);
             Ok(())
         })?;
 

@@ -10,7 +10,12 @@ const SERIAL_DEVICE: &str = "/dev/ttyUSB0";
 
 fn main() -> io::Result<()> {
     let mut interface = TypewriterInterface::new(SERIAL_DEVICE)?;
+
+    let mut buffer = String::new();
+    let stdin = io::stdin();
     loop {
+        stdin.read_line(&mut buffer)?;
+        interface.write_unicode(&buffer)?;
         if let Some(character) = interface.read_character() {
             use erika_3004::InputEvent::*;
             match character {
