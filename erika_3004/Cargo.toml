@@ -12,4 +12,4 @@ edition = "2021"
 [dependencies]
 gdrascii_codec = { version = "*", path = "../gdrascii_codec" }
 serial = "0.4"
-num_enum = "0.5"
+num_enum = { version = "0.5", default-features = false }
