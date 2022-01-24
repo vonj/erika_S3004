@@ -126,7 +126,7 @@ impl TypewriterInterface {
 
     /// Read a character from a serial device. The character is decoded along the way.
     pub fn read_character(&mut self) -> Option<InputEvent> {
-        let mut buf = vec![0, 0, 0]; // 3 is the maximum number of bytes used for a multi-byte character
+        let mut buf = [0; 3]; // 3 is the maximum number of bytes used for a multi-byte character
         if let Ok(size) = self.read(&mut buf) {
             if size > 0 {
                 return match gdrascii_codec::decode_char(&buf[0..size]) {
