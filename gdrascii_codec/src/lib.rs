@@ -7,272 +7,276 @@
 extern crate alloc;
 use alloc::{string::String, vec::Vec};
 
-extern crate phf;
-
-use phf::phf_map;
-
 // UTF-8 to GDR ASCII
-static UTF8_TO_GDR_ASCII: phf::Map<char, &[u8]> = phf_map! {
-    // control characters
-    '\x08' => b"\x72", // backspace
-    '\t'   => b"\x79",
-    '\n'   => b"\x77",
-    '\r'   => b"\x78",
+const fn utf8_to_gdr_ascii(c: char) -> Option<&'static [u8]> {
+    Some(match c {
+        // control characters
+        '\x08' => b"\x72", // backspace
+        '\t' => b"\x79",
+        '\n' => b"\x77",
+        '\r' => b"\x78",
 
-    // punctuation
-    ' '    => b"\x71",
-    '!'    => b"\x42",
-    '"'    => b"\x43",
-    '#'    => b"\x41",
-    '$'    => b"\x48",
-    '%'    => b"\x04",
-    '&'    => b"\x02",
-    '\''   => b"\x17",
-    '('    => b"\x1D",
-    ')'    => b"\x1F",
-    '*'    => b"\x1B",
-    '+'    => b"\x25",
-    ','    => b"\x64",
-    '-'    => b"\x62",
-    '.'    => b"\x63",
-    '/'    => b"\x40",
+        // punctuation
+        ' ' => b"\x71",
+        '!' => b"\x42",
+        '"' => b"\x43",
+        '#' => b"\x41",
+        '$' => b"\x48",
+        '%' => b"\x04",
+        '&' => b"\x02",
+        '\'' => b"\x17",
+        '(' => b"\x1D",
+        ')' => b"\x1F",
+        '*' => b"\x1B",
+        '+' => b"\x25",
+        ',' => b"\x64",
+        '-' => b"\x62",
+        '.' => b"\x63",
+        '/' => b"\x40",
 
-    // digits
-    '0'    => b"\x0D",
-    '1'    => b"\x11",
-    '2'    => b"\x10",
-    '3'    => b"\x0F",
-    '4'    => b"\x0E",
-    '5'    => b"\x0C",
-    '6'    => b"\x0B",
-    '7'    => b"\x0A",
-    '8'    => b"\x09",
-    '9'    => b"\x08",
+        // digits
+        '0' => b"\x0D",
+        '1' => b"\x11",
+        '2' => b"\x10",
+        '3' => b"\x0F",
+        '4' => b"\x0E",
+        '5' => b"\x0C",
+        '6' => b"\x0B",
+        '7' => b"\x0A",
+        '8' => b"\x09",
+        '9' => b"\x08",
 
-    // more punctuation
-    ':'    => b"\x13",
-    ';'    => b"\x3B",
-    '='    => b"\x2E",
-    '?'    => b"\x35",
+        // more punctuation
+        ':' => b"\x13",
+        ';' => b"\x3B",
+        '=' => b"\x2E",
+        '?' => b"\x35",
 
-    // upper case letters
-    'A'    => b"\x30",
-    'B'    => b"\x18",
-    'C'    => b"\x20",
-    'D'    => b"\x14",
-    'E'    => b"\x34",
-    'F'    => b"\x3E",
-    'G'    => b"\x1C",
-    'H'    => b"\x12",
-    'I'    => b"\x21",
-    'J'    => b"\x32",
-    'K'    => b"\x24",
-    'L'    => b"\x2C",
-    'M'    => b"\x16",
-    'N'    => b"\x2A",
-    'O'    => b"\x1E",
-    'P'    => b"\x2F",
-    'Q'    => b"\x1A",
-    'R'    => b"\x36",
-    'S'    => b"\x33",
-    'T'    => b"\x37",
-    'U'    => b"\x28",
-    'V'    => b"\x22",
-    'W'    => b"\x2D",
-    'X'    => b"\x26",
-    'Y'    => b"\x31",
-    'Z'    => b"\x38",
+        // upper case letters
+        'A' => b"\x30",
+        'B' => b"\x18",
+        'C' => b"\x20",
+        'D' => b"\x14",
+        'E' => b"\x34",
+        'F' => b"\x3E",
+        'G' => b"\x1C",
+        'H' => b"\x12",
+        'I' => b"\x21",
+        'J' => b"\x32",
+        'K' => b"\x24",
+        'L' => b"\x2C",
+        'M' => b"\x16",
+        'N' => b"\x2A",
+        'O' => b"\x1E",
+        'P' => b"\x2F",
+        'Q' => b"\x1A",
+        'R' => b"\x36",
+        'S' => b"\x33",
+        'T' => b"\x37",
+        'U' => b"\x28",
+        'V' => b"\x22",
+        'W' => b"\x2D",
+        'X' => b"\x26",
+        'Y' => b"\x31",
+        'Z' => b"\x38",
 
-    // punctuation
-    '^'    => b"\x19\x71",
-    '_'    => b"\x01",
-    '`'    => b"\x2B\x71",
+        // punctuation
+        '^' => b"\x19\x71",
+        '_' => b"\x01",
+        '`' => b"\x2B\x71",
 
-    // lower case letters
-    'a'    => b"\x61",
-    'b'    => b"\x4E",
-    'c'    => b"\x57",
-    'd'    => b"\x53",
-    'e'    => b"\x5A",
-    'f'    => b"\x49",
-    'g'    => b"\x60",
-    'h'    => b"\x55",
-    'i'    => b"\x05",
-    'j'    => b"\x4B",
-    'k'    => b"\x50",
-    'l'    => b"\x4D",
-    'm'    => b"\x4A",
-    'n'    => b"\x5C",
-    'o'    => b"\x5E",
-    'p'    => b"\x5B",
-    'q'    => b"\x52",
-    'r'    => b"\x59",
-    's'    => b"\x58",
-    't'    => b"\x56",
-    'u'    => b"\x5D",
-    'v'    => b"\x4F",
-    'w'    => b"\x4C",
-    'x'    => b"\x5F",
-    'y'    => b"\x51",
-    'z'    => b"\x54",
+        // lower case letters
+        'a' => b"\x61",
+        'b' => b"\x4E",
+        'c' => b"\x57",
+        'd' => b"\x53",
+        'e' => b"\x5A",
+        'f' => b"\x49",
+        'g' => b"\x60",
+        'h' => b"\x55",
+        'i' => b"\x05",
+        'j' => b"\x4B",
+        'k' => b"\x50",
+        'l' => b"\x4D",
+        'm' => b"\x4A",
+        'n' => b"\x5C",
+        'o' => b"\x5E",
+        'p' => b"\x5B",
+        'q' => b"\x52",
+        'r' => b"\x59",
+        's' => b"\x58",
+        't' => b"\x56",
+        'u' => b"\x5D",
+        'v' => b"\x4F",
+        'w' => b"\x4C",
+        'x' => b"\x5F",
+        'y' => b"\x51",
+        'z' => b"\x54",
 
-    // special chars
-    '|'    => b"\x27",
-    '£'    => b"\x06",
-    '§'    => b"\x3D",
-    '¨'    => b"\x03\x71",
-    '°'    => b"\x39",
-    '²'    => b"\x15",
-    '³'    => b"\x23",
+        // special chars
+        '|' => b"\x27",
+        '£' => b"\x06",
+        '§' => b"\x3D",
+        '¨' => b"\x03\x71",
+        '°' => b"\x39",
+        '²' => b"\x15",
+        '³' => b"\x23",
 
-    // umlauts, accents
-    'Ä'    => b"\x3F",
-    'Ö'    => b"\x3C",
-    'Ü'    => b"\x3A",
-    'ß'    => b"\x47",
-    'ä'    => b"\x65",
-    'ç'    => b"\x45",
-    'è'    => b"\x46",
-    'é'    => b"\x44",
-    'ö'    => b"\x66",
-    'ü'    => b"\x67",
-    '´'    => b"\x29\x71",
-    'μ'    => b"\x07",
+        // umlauts, accents
+        'Ä' => b"\x3F",
+        'Ö' => b"\x3C",
+        'Ü' => b"\x3A",
+        'ß' => b"\x47",
+        'ä' => b"\x65",
+        'ç' => b"\x45",
+        'è' => b"\x46",
+        'é' => b"\x44",
+        'ö' => b"\x66",
+        'ü' => b"\x67",
+        '´' => b"\x29\x71",
+        'μ' => b"\x07",
 
-    // combined chars
-    '€'    => b"\x20\x72\x2E",
-};
+        // combined chars
+        '€' => b"\x20\x72\x2E",
 
-static GDR_ASCII_TO_UTF8: phf::Map<&[u8], char> = phf_map! {
-    // control characters
-    b"\x72"         =>  '\x08',
-    b"\x79"         =>  '\t',
-    b"\x77"         =>  '\n',
-    b"\x78"         =>  '\r',
+        _ => return None,
+    })
+}
 
-    // punctuation
-    b"\x71"         => ' ',
-    b"\x42"         => '!',
-    b"\x43"         => '"',
-    b"\x41"         => '#',
-    b"\x48"         => '$',
-    b"\x04"         => '%',
-    b"\x02"         => '&',
-    b"\x17"         => '\'',
-    b"\x1D"         => '(',
-    b"\x1F"         => ')',
-    b"\x1B"         => '*',
-    b"\x25"         => '+',
-    b"\x64"         => ',',
-    b"\x62"         => '-',
-    b"\x63"         => '.',
-    b"\x40"         => '/',
+const fn gdr_ascii_to_utf8(bytes: &[u8]) -> Option<char> {
+    Some(match bytes {
+        // control characters
+        b"\x72" => '\x08',
+        b"\x79" => '\t',
+        b"\x77" => '\n',
+        b"\x78" => '\r',
 
-    // digits
-    b"\x0D"         => '0',
-    b"\x11"         => '1',
-    b"\x10"         => '2',
-    b"\x0F"         => '3',
-    b"\x0E"         => '4',
-    b"\x0C"         => '5',
-    b"\x0B"         => '6',
-    b"\x0A"         => '7',
-    b"\x09"         => '8',
-    b"\x08"         => '9',
+        // punctuation
+        b"\x71" => ' ',
+        b"\x42" => '!',
+        b"\x43" => '"',
+        b"\x41" => '#',
+        b"\x48" => '$',
+        b"\x04" => '%',
+        b"\x02" => '&',
+        b"\x17" => '\'',
+        b"\x1D" => '(',
+        b"\x1F" => ')',
+        b"\x1B" => '*',
+        b"\x25" => '+',
+        b"\x64" => ',',
+        b"\x62" => '-',
+        b"\x63" => '.',
+        b"\x40" => '/',
 
-    // more punctuation
-    b"\x13"         => ':',
-    b"\x3B"         => ';',
-    b"\x2E"         => '=',
-    b"\x35"         => '?',
+        // digits
+        b"\x0D" => '0',
+        b"\x11" => '1',
+        b"\x10" => '2',
+        b"\x0F" => '3',
+        b"\x0E" => '4',
+        b"\x0C" => '5',
+        b"\x0B" => '6',
+        b"\x0A" => '7',
+        b"\x09" => '8',
+        b"\x08" => '9',
 
-    // upper case letters
-    b"\x30"         => 'A',
-    b"\x18"         => 'B',
-    b"\x20"         => 'C',
-    b"\x14"         => 'D',
-    b"\x34"         => 'E',
-    b"\x3E"         => 'F',
-    b"\x1C"         => 'G',
-    b"\x12"         => 'H',
-    b"\x21"         => 'I',
-    b"\x32"         => 'J',
-    b"\x24"         => 'K',
-    b"\x2C"         => 'L',
-    b"\x16"         => 'M',
-    b"\x2A"         => 'N',
-    b"\x1E"         => 'O',
-    b"\x2F"         => 'P',
-    b"\x1A"         => 'Q',
-    b"\x36"         => 'R',
-    b"\x33"         => 'S',
-    b"\x37"         => 'T',
-    b"\x28"         => 'U',
-    b"\x22"         => 'V',
-    b"\x2D"         => 'W',
-    b"\x26"         => 'X',
-    b"\x31"         => 'Y',
-    b"\x38"         => 'Z',
+        // more punctuation
+        b"\x13" => ':',
+        b"\x3B" => ';',
+        b"\x2E" => '=',
+        b"\x35" => '?',
 
-    // punctuation
-    b"\x19\x71"     => '^' ,
-    b"\x01"         => '_',
-    b"\x2B\x71"     => '`',
+        // upper case letters
+        b"\x30" => 'A',
+        b"\x18" => 'B',
+        b"\x20" => 'C',
+        b"\x14" => 'D',
+        b"\x34" => 'E',
+        b"\x3E" => 'F',
+        b"\x1C" => 'G',
+        b"\x12" => 'H',
+        b"\x21" => 'I',
+        b"\x32" => 'J',
+        b"\x24" => 'K',
+        b"\x2C" => 'L',
+        b"\x16" => 'M',
+        b"\x2A" => 'N',
+        b"\x1E" => 'O',
+        b"\x2F" => 'P',
+        b"\x1A" => 'Q',
+        b"\x36" => 'R',
+        b"\x33" => 'S',
+        b"\x37" => 'T',
+        b"\x28" => 'U',
+        b"\x22" => 'V',
+        b"\x2D" => 'W',
+        b"\x26" => 'X',
+        b"\x31" => 'Y',
+        b"\x38" => 'Z',
 
-    // lower case letters
-    b"\x61"         => 'a',
-    b"\x4E"         => 'b',
-    b"\x57"         => 'c',
-    b"\x53"         => 'd',
-    b"\x5A"         => 'e',
-    b"\x49"         => 'f',
-    b"\x60"         => 'g',
-    b"\x55"         => 'h',
-    b"\x05"         => 'i',
-    b"\x4B"         => 'j',
-    b"\x50"         => 'k',
-    b"\x4D"         => 'l',
-    b"\x4A"         => 'm',
-    b"\x5C"         => 'n',
-    b"\x5E"         => 'o',
-    b"\x5B"         => 'p',
-    b"\x52"         => 'q',
-    b"\x59"         => 'r',
-    b"\x58"         => 's',
-    b"\x56"         => 't',
-    b"\x5D"         => 'u',
-    b"\x4F"         => 'v',
-    b"\x4C"         => 'w',
-    b"\x5F"         => 'x',
-    b"\x51"         => 'y',
-    b"\x54"         => 'z',
+        // punctuation
+        b"\x19\x71" => '^',
+        b"\x01" => '_',
+        b"\x2B\x71" => '`',
 
-    // special chars
-    b"\x27"         => '|',
-    b"\x06"         => '£',
-    b"\x3D"         => '§',
-    b"\x03x71"      => '¨',
-    b"\x39"         => '°',
-    b"\x15"         => '²',
-    b"\x23"         => '³',
+        // lower case letters
+        b"\x61" => 'a',
+        b"\x4E" => 'b',
+        b"\x57" => 'c',
+        b"\x53" => 'd',
+        b"\x5A" => 'e',
+        b"\x49" => 'f',
+        b"\x60" => 'g',
+        b"\x55" => 'h',
+        b"\x05" => 'i',
+        b"\x4B" => 'j',
+        b"\x50" => 'k',
+        b"\x4D" => 'l',
+        b"\x4A" => 'm',
+        b"\x5C" => 'n',
+        b"\x5E" => 'o',
+        b"\x5B" => 'p',
+        b"\x52" => 'q',
+        b"\x59" => 'r',
+        b"\x58" => 's',
+        b"\x56" => 't',
+        b"\x5D" => 'u',
+        b"\x4F" => 'v',
+        b"\x4C" => 'w',
+        b"\x5F" => 'x',
+        b"\x51" => 'y',
+        b"\x54" => 'z',
 
-    // umlauts, accents
-    b"\x3F"         => 'Ä',
-    b"\x3C"         => 'Ö',
-    b"\x3A"         => 'Ü',
-    b"\x47"         => 'ß',
-    b"\x65"         => 'ä',
-    b"\x45"         => 'ç',
-    b"\x46"         => 'è',
-    b"\x44"         => 'é',
-    b"\x66"         => 'ö',
-    b"\x67"         => 'ü',
-    b"\x29\x71"     => '´',
-    b"\x07"         => 'μ',
+        // special chars
+        b"\x27" => '|',
+        b"\x06" => '£',
+        b"\x3D" => '§',
+        b"\x03x71" => '¨',
+        b"\x39" => '°',
+        b"\x15" => '²',
+        b"\x23" => '³',
 
-    // combined chars
-    b"\x20\x72\x2E" => '€'
-};
+        // umlauts, accents
+        b"\x3F" => 'Ä',
+        b"\x3C" => 'Ö',
+        b"\x3A" => 'Ü',
+        b"\x47" => 'ß',
+        b"\x65" => 'ä',
+        b"\x45" => 'ç',
+        b"\x46" => 'è',
+        b"\x44" => 'é',
+        b"\x66" => 'ö',
+        b"\x67" => 'ü',
+        b"\x29\x71" => '´',
+        b"\x07" => 'μ',
+
+        // combined chars
+        b"\x20\x72\x2E" => '€',
+
+        _ => return None,
+    })
+}
 
 /// Errors that can happen while encoding or decoding
 #[derive(Debug)]
@@ -288,7 +292,7 @@ pub type EncodingResult<T> = Result<T, EncodingError>;
 
 /// Encode a single char
 pub fn encode_char(character: char) -> Option<&'static [u8]> {
-    UTF8_TO_GDR_ASCII.get(&character).cloned()
+    utf8_to_gdr_ascii(character)
 }
 
 /// Encode a string.
@@ -298,7 +302,7 @@ pub fn try_encode(text: &str) -> EncodingResult<Vec<u8>> {
     let mut out = Vec::<u8>::with_capacity(text.len());
 
     for c in text.chars() {
-        match UTF8_TO_GDR_ASCII.get(&c) {
+        match utf8_to_gdr_ascii(c) {
             Some(encoded) => out.extend_from_slice(encoded),
             None => return Err(EncodingError::UnrepresentableCharacter),
         }
@@ -315,7 +319,7 @@ pub fn encode(text: &str) -> Vec<u8> {
     let mut out = Vec::<u8>::with_capacity(text.len());
 
     for c in text.chars() {
-        let encoded = match UTF8_TO_GDR_ASCII.get(&c) {
+        let encoded = match utf8_to_gdr_ascii(c) {
             Some(encoded_char) => encoded_char,
             None => b"\x35".as_ref(),
         };
@@ -329,10 +333,7 @@ pub fn encode(text: &str) -> Vec<u8> {
 /// Decode a single character.
 /// This can handle multi-byte characters, but the sequence always needs to represent just one single character.
 pub fn decode_char(character: &[u8]) -> EncodingResult<char> {
-    GDR_ASCII_TO_UTF8
-        .get(&character)
-        .cloned()
-        .ok_or(EncodingError::InvalidInput)
+    gdr_ascii_to_utf8(&character).ok_or(EncodingError::InvalidInput)
 }
 
 /// Decode bytes into a string.

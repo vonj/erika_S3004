@@ -9,3 +9,7 @@ members = [
     "erika_3004",
     "erikad"
 ]
+
+
+[profile.release]
+lto = true
