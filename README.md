@@ -37,10 +37,10 @@ cargo build --release
 
 Printing some text:
 ```
-./target/release/erikad < text.txt
+./target/release/erika-cli print text.txt
 ```
 
 Reading keyboard input from the typewriter:
 ```
-./target/release/erikad
+./target/release/erika-cli connect
 ```
