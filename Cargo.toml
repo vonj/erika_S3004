@@ -7,7 +7,7 @@
 members = [
     "gdrascii_codec",
     "erika_3004",
-    "erikad"
+    "erika_cli"
 ]
 
 

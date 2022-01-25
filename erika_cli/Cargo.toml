@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "erikad"
+name = "erika-cli"
 version = "0.1.0"
 edition = "2021"
 
@@ -12,3 +12,4 @@ edition = "2021"
 [dependencies]
 erika_3004 = { version = "*", path = "../erika_3004" }
 gdrascii_codec = { version = "*", path = "../gdrascii_codec" }
+clap = "3"

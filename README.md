@@ -10,7 +10,7 @@ This project is based on information from [Chaostreff Potsdam](https://github.co
 - A 5V USB TTL adapter (I used [this](https://www.amazon.de/USB-TTL-Konverter-Modul-mit-eingebautem-CP2102/dp/B00AFRXKFU) one, which I still had lying around)
 - A few pieces of wire, to connect the pins of the TTL USB Adapter with the typewriter.
 
-Note: although the typewriter turns on when the 5V pin is connected, the external power source is still needed in order to do anythin with it.
+Note: although the typewriter turns on when the 5V pin is connected, the external power source is still needed in order to do anything with it.
 
 | USB TTL | Erika |
 |---------|-------|
