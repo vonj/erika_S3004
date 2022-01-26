@@ -219,6 +219,8 @@ const fn gdr_ascii_to_utf8(bytes: &[u8]) -> Option<char> {
         b"\x19\x71" => '^',
         b"\x01" => '_',
         b"\x2B\x71" => '`',
+        b"\x29" => '´', // TODO check
+        b"\x2B" => '`',  // TODO check
 
         // lower case letters
         b"\x61" => 'a',

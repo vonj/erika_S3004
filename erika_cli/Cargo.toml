@@ -13,3 +13,5 @@ edition = "2021"
 erika_3004 = { version = "*", path = "../erika_3004" }
 gdrascii_codec = { version = "*", path = "../gdrascii_codec" }
 clap = "3"
+uinput = "*"
+nix = "0.10"

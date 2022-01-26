@@ -23,7 +23,7 @@ pub enum BoudRate {
 
 /// Possible control codes to send
 #[repr(u8)]
-#[derive(TryFromPrimitive, Debug)]
+#[derive(TryFromPrimitive, Debug, Clone, Copy)]
 pub enum ControlCode {
     // numbers before here are covered by the text codec
     HalfstepRight = 0x73,
@@ -81,6 +81,7 @@ pub enum ControlCode {
 }
 
 /// Classification of an input event
+#[derive(Debug, Clone, Copy)]
 pub enum InputEvent {
     ControlCode(ControlCode),
     Character(char),

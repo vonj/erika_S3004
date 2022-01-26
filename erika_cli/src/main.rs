@@ -7,11 +7,13 @@ use erika_3004::TypewriterInterface;
 use std::fs;
 use std::io;
 
-use std::io::Write;
-
 use clap::{App, AppSettings, Arg};
 
+use nix::errno::Errno;
+
 const SERIAL_DEVICE: &str = "/dev/ttyUSB0";
+
+mod keyboard;
 
 fn main() -> io::Result<()> {
     let matches = App::new("erika-cli")
@@ -83,15 +85,23 @@ fn main() -> io::Result<()> {
                 ("keyboard", _) => {
                     interface.enable_remote_mode()?;
 
-                    loop {
-                        if let Some(character) = interface.read_character() {
-                            use erika_3004::InputEvent::*;
-                            match character {
-                                ControlCode(code) => print!(" {:?} ", code),
-                                Character(character) => print!("{}", character),
+                    match keyboard::ErikaKeyboard::new() {
+                        Ok(mut virtual_keyboard) => loop {
+                            if let Some(character) = interface.read_character() {
+                                virtual_keyboard.simulate_keypress(character);
                             }
+                        },
+                        Err(uinput::Error::Nix(nix::Error::Sys(Errno::EACCES))) => {
+                            eprintln!(
+                                r#"Error: Not enough permissions to simulate keyboard input.
+Either run erika-cli keyboard as root, or add
+
+    KERNEL=="uinput", OWNER="<YOUR USERNAME HERE>"
+
+to /etc/udev/rules.d/erika.rules."#
+                            );
                         }
-                        io::stdout().flush().unwrap();
+                        Err(e) => panic!("Unexpected error occurred: {:?}", e),
                     }
                 }
                 ("bell", _) => {
