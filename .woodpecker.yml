@@ -2,4 +2,6 @@ pipeline:
   test:
     image: rust
     commands:
+      - apt-get update
+      - apt-get install -y libudev-dev
       - cargo test
