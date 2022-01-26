@@ -7,6 +7,8 @@ use erika_3004::TypewriterInterface;
 use std::fs;
 use std::io;
 
+use std::io::Write;
+
 use clap::{App, AppSettings, Arg};
 
 const SERIAL_DEVICE: &str = "/dev/ttyUSB0";
@@ -22,14 +24,26 @@ fn main() -> io::Result<()> {
         )
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(
-            App::new("print")
+            App::new("print-file")
                 .about("Print a text file")
                 .arg(Arg::new("NAME").required(true)),
         )
-        .subcommand(App::new("connect").about(
-            "Connect to the typewriter, send text from stdin and print received text to stdout",
+        .subcommand(App::new("keyboard").about(
+            "Connect the typewriter as a keyboard. You need to run erika-cli enable-keyboard afterwards to make the machine print again.",
         ))
+        .subcommand(App::new("print").about("Print text from stdin"))
         .subcommand(App::new("bell").about("Sound the bell"))
+        .subcommand(App::new("enable-keyboard").about("Re-enable direct printing of key presses"))
+        .subcommand(
+            App::new("move-paper")
+                .arg(
+                    Arg::new("STEP")
+                        .help("Value needs to be 1 or 2")
+                        .default_value("2")
+                        .required(false),
+                )
+                .about("Move the paper"),
+        )
         .get_matches();
 
     match matches.subcommand() {
@@ -41,16 +55,35 @@ fn main() -> io::Result<()> {
             let mut interface = TypewriterInterface::new(device)?;
 
             match subcommand {
-                ("print", print_args) => {
+                ("print-file", print_args) => {
                     let path = print_args.value_of("NAME").expect("NAME is required");
+                    interface.enable_remote_mode()?;
                     interface.write_unicode(&fs::read_to_string(path)?)?;
+                    interface.disable_remote_mode()?;
                 }
-                ("connect", _) => {
+                ("print", _) => {
+                    println!("Info: Text typed here will be printed.");
+                    println!("Info: Exit by pressing Ctrl + D");
+                    interface.enable_remote_mode()?;
+
                     let mut buffer = String::new();
                     let stdin = io::stdin();
+
                     loop {
-                        stdin.read_line(&mut buffer)?;
+                        let size = stdin.read_line(&mut buffer)?;
+                        if size <= 1 {
+                            break;
+                        }
+
                         interface.write_unicode(&buffer)?;
+                    }
+
+                    interface.disable_remote_mode()?;
+                }
+                ("keyboard", _) => {
+                    interface.enable_remote_mode()?;
+
+                    loop {
                         if let Some(character) = interface.read_character() {
                             use erika_3004::InputEvent::*;
                             match character {
@@ -58,10 +91,36 @@ fn main() -> io::Result<()> {
                                 Character(character) => print!("{}", character),
                             }
                         }
+                        io::stdout().flush().unwrap();
                     }
                 }
                 ("bell", _) => {
                     interface.bell()?;
+                }
+                ("move-paper", move_args) => {
+                    let arg = move_args
+                        .value_of("STEP")
+                        .expect("Default value exists")
+                        .parse::<u8>();
+                    match arg {
+                        Ok(steps) => {
+                            if steps < 2 || steps > 6 {
+                                interface.move_paper(steps)?;
+                            } else {
+                                eprintln!("Invalid number of paper steps passed. 3, 4, 5, 6 may not be used.");
+                                return Ok(());
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!(
+                                "The argument passed as paper steps was not a parsable number: {}",
+                                e
+                            );
+                        }
+                    }
+                }
+                ("enable-keyboard", _) => {
+                    interface.disable_remote_mode()?;
                 }
                 _ => {}
             }

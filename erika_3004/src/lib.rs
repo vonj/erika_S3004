@@ -21,13 +21,6 @@ pub enum BoudRate {
     Rate19200 = 1,
 }
 
-/// Possible steps to move the paper by
-#[repr(u8)]
-pub enum PaperStep {
-    Step1,
-    Step2,
-}
-
 /// Possible control codes to send
 #[repr(u8)]
 #[derive(TryFromPrimitive, Debug)]
@@ -60,8 +53,8 @@ pub enum ControlCode {
     BackwardsOff,
     RightMarginOn,
     MarginSetOffInofficial,
-    KeyboardOff,
-    KeyboardOn,
+    KeyboardOff = 0x91,
+    KeyboardOn = 0x92,
     Reset,
     PrinterReady,
     SecondCharsetOff,
@@ -73,14 +66,14 @@ pub enum ControlCode {
     LineDown,
     AutorepeatAllOn,
     BoudRate,
-    KeyStrength,
-    TabStep = 0xA3,
-    MovePaper,
+    KeyStrength = 0xA3,
+    TabStep = 0xA5,
+    MovePaper = 0xA6,
     RotateWheel,
     MoveTape,
     DoublePrint = 0xA9,
-    Bell,
-    KeyboardInput,
+    Bell = 0xAA,
+    KeyboardInput = 0xAB,
     KeyboardInput2,
     DeleteRelocate,
     DeleteLastChar,
@@ -124,6 +117,11 @@ impl TypewriterInterface {
         Ok(())
     }
 
+    fn send_enter(&mut self) -> io::Result<()> {
+        self.write_unicode("\n")?;
+        Ok(())
+    }
+
     /// Read a character from a serial device. The character is decoded along the way.
     pub fn read_character(&mut self) -> Option<InputEvent> {
         let mut buf = [0; 3]; // 3 is the maximum number of bytes used for a multi-byte character
@@ -149,18 +147,34 @@ impl TypewriterInterface {
     /// Sound the bell
     pub fn bell(&mut self) -> io::Result<()> {
         self.send_control(ControlCode::Bell)?;
-        Ok(())
+        self.send_enter()
     }
 
     pub fn set_tab_size(&mut self, strength: u8) -> io::Result<()> {
         self.send_control(ControlCode::TabStep)?;
         self.file.write(&[strength])?;
+        self.send_enter()
+    }
+
+    /// Move the paper. The step size is 1/240.
+    /// The steps 3, 4, 5, 6 are invalid, and may not be used.
+    pub fn move_paper(&mut self, step: u8) -> io::Result<()> {
+        assert!(step < 2 || step > 6);
+
+        self.send_control(ControlCode::MovePaper)?;
+        self.file.write(&[step as u8])?;
+        self.send_enter()
+    }
+
+    /// Split keyboard and printing. Key presses only be sent to the computer, not printed.
+    pub fn enable_remote_mode(&mut self) -> io::Result<()> {
+        self.send_control(ControlCode::KeyboardOff)?;
         Ok(())
     }
 
-    pub fn move_paper(&mut self, step: PaperStep) -> io::Result<()> {
-        self.send_control(ControlCode::MovePaper)?;
-        self.file.write(&[step as u8])?;
+    /// Connect keyboard and printing. Key presses will directly result in printing.
+    pub fn disable_remote_mode(&mut self) -> io::Result<()> {
+        self.send_control(ControlCode::KeyboardOn)?;
         Ok(())
     }
 }

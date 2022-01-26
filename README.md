@@ -40,7 +40,7 @@ Printing some text:
 ./target/release/erika-cli print text.txt
 ```
 
-Reading keyboard input from the typewriter:
+For more commands, have a look at the help page:
 ```
-./target/release/erika-cli connect
+./target/release/erika-cli --help
 ```
