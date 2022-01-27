@@ -13,19 +13,9 @@ pub struct ErikaKeyboard {
 }
 
 fn needs_shift_pressed(input: InputEvent) -> bool {
-    if let InputEvent::Character(character) = input {
-        if character.is_uppercase()
-            || match character {
-                '!' | '"' | '§' | '%' | '&' | '/' | '(' | ')' | '=' | '?' | '`' | '_' | ';'
-                | ':' | '\'' | '*' => true,
-                _ => false,
-            }
-        {
-            return true;
-        }
-    }
-
-    return false;
+    matches!(input, InputEvent::Character(character) if
+        character.is_uppercase()
+            || matches!(character, '!' | '"' | '§' | '%' | '&' | '/' | '(' | ')' | '=' | '?' | '`' | '_' | ';' | ':' | '\'' | '*'))
 }
 
 impl ErikaKeyboard {
@@ -111,7 +101,7 @@ impl ErikaKeyboard {
                 'K' | 'k' => K,
                 'L' | 'l' => L,
                 ';' => Comma,
-                '\''| '#' => BackSlash,
+                '\'' | '#' => BackSlash,
                 'Z' | 'z' => Y,
                 'X' | 'x' => X,
                 'C' | 'c' => C,

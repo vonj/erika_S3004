@@ -335,7 +335,7 @@ pub fn encode(text: &str) -> Vec<u8> {
 /// Decode a single character.
 /// This can handle multi-byte characters, but the sequence always needs to represent just one single character.
 pub fn decode_char(character: &[u8]) -> EncodingResult<char> {
-    gdr_ascii_to_utf8(&character).ok_or(EncodingError::InvalidInput)
+    gdr_ascii_to_utf8(character).ok_or(EncodingError::InvalidInput)
 }
 
 /// Decode bytes into a string.

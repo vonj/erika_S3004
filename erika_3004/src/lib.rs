@@ -114,7 +114,7 @@ impl TypewriterInterface {
 
     /// Send a control code
     fn send_control(&mut self, code: ControlCode) -> io::Result<()> {
-        self.write(&[code as u8])?;
+        self.write_all(&[code as u8])?;
         Ok(())
     }
 
@@ -156,17 +156,17 @@ impl TypewriterInterface {
 
     pub fn set_tab_size(&mut self, strength: u8) -> io::Result<()> {
         self.send_control(ControlCode::TabStep)?;
-        self.file.write(&[strength])?;
+        self.file.write_all(&[strength])?;
         self.send_enter()
     }
 
     /// Move the paper. The step size is 1/240.
     /// The steps 3, 4, 5, 6 are invalid, and may not be used.
     pub fn move_paper(&mut self, step: u8) -> io::Result<()> {
-        assert!(step < 2 || step > 6);
+        assert!(!(2..=6).contains(&step));
 
         self.send_control(ControlCode::MovePaper)?;
-        self.file.write(&[step as u8])?;
+        self.file.write_all(&[step as u8])?;
         self.send_enter()
     }
 
