@@ -62,7 +62,12 @@ impl ErikaKeyboard {
         let keyboard_event: event::keyboard::Key = match input {
             InputEvent::ControlCode(code) => match code {
                 ControlCode::DeleteLastChar => BackSpace,
-                ControlCode::Relocate => Home,
+                ControlCode::HalfstepUp => Up,
+                ControlCode::HalfstepDown => Down,
+                ControlCode::HalfstepLeft => Left,
+                ControlCode::MarginAllDel => Home,
+                ControlCode::Relocate => End,
+                ControlCode::MarginSet => Esc,
                 ControlCode::Row1 => return,
                 ControlCode::GetPaper => return,
                 ControlCode::Chars10PerInch => return,
@@ -79,7 +84,7 @@ impl ErikaKeyboard {
                 '8' | '(' => _8,
                 '9' | ')' => _9,
                 '0' | '=' => _0,
-                'ß' => Minus,
+                'ß' | '?' => Minus,
                 'Ü' | 'ü' => LeftBrace,
                 'Ä' | 'ä' => Apostrophe,
                 'Ö' | 'ö' => SemiColon,
@@ -106,7 +111,7 @@ impl ErikaKeyboard {
                 'K' | 'k' => K,
                 'L' | 'l' => L,
                 ';' => Comma,
-                '\'' => BackSlash,
+                '\''| '#' => BackSlash,
                 'Z' | 'z' => Y,
                 'X' | 'x' => X,
                 'C' | 'c' => C,
@@ -120,7 +125,11 @@ impl ErikaKeyboard {
                 ' ' => Space,
                 '´' => Equal,
                 '`' => Equal,
-                _ => unimplemented!("Unimplemented character code {}", character),
+                '\x08' => Right,
+                _ => {
+                    println!("keyboard: Unimplemented character code {:?}", character);
+                    return;
+                }
             },
         };
 

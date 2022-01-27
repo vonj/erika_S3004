@@ -134,7 +134,10 @@ impl TypewriterInterface {
                         let byte = buf[0].try_into();
                         match byte {
                             Ok(control_code) => Some(InputEvent::ControlCode(control_code)),
-                            Err(_) => unreachable!("Data received should either be in the codec range or a control code. Code was {}", buf[0])
+                            Err(_) => {
+                                eprintln!("Data received should either be in the codec range or a control code. This may indicate a character missing in the codec implementation. Code was {}", buf[0]);
+                                None
+                            }
                         }
                     }
                     _ => None,
