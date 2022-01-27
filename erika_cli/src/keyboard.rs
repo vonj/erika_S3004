@@ -46,6 +46,7 @@ impl ErikaKeyboard {
             self.device
                 .synchronize()
                 .expect("Failed to simulate keypress");
+
             return;
         }
 
@@ -61,7 +62,10 @@ impl ErikaKeyboard {
                 ControlCode::Row1 => return,
                 ControlCode::GetPaper => return,
                 ControlCode::Chars10PerInch => return,
-                _ => panic!("Unimplemented control code: {:?}", code),
+                _ => {
+                    eprintln!("Unimplemented control code: {:?}", code);
+                    return;
+                }
             },
             InputEvent::Character(character) => match character {
                 '1' | '!' => _1,
