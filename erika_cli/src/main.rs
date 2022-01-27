@@ -7,6 +7,8 @@ use erika_3004::TypewriterInterface;
 use std::fs;
 use std::io;
 
+use std::time::Duration;
+
 use clap::{App, AppSettings, Arg};
 
 use nix::errno::Errno;
@@ -104,7 +106,7 @@ to /etc/udev/rules.d/erika.rules."#
                 }
             }
             ("bell", _) => {
-                interface.bell()?;
+                interface.bell(Duration::from_secs(1))?;
             }
             ("move-paper", move_args) => {
                 let arg = move_args

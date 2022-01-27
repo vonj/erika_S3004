@@ -5,6 +5,8 @@
 use std::io;
 use std::io::{Read, Write};
 
+use std::time::Duration;
+
 use serial::prelude::*;
 
 use num_enum::TryFromPrimitive;
@@ -149,9 +151,20 @@ impl TypewriterInterface {
     }
 
     /// Sound the bell
-    pub fn bell(&mut self) -> io::Result<()> {
-        self.send_control(ControlCode::Bell)?;
-        self.send_enter()
+    pub fn bell(&mut self, duration: Duration) -> io::Result<()> {
+        let time_code: Result<u8, _> = (duration.as_millis() / 20).try_into(); // One step on the typewriter is 20ms
+        match time_code {
+            Ok(steps) => {
+                self.send_control(ControlCode::Bell)?;
+                self.write_all(&[steps])?;
+                Ok(())
+            }
+            Err(e) => {
+                // TODO add our own error type and handle this better
+                eprintln!("{}", e);
+                Ok(())
+            }
+        }
     }
 
     pub fn set_tab_size(&mut self, strength: u8) -> io::Result<()> {
