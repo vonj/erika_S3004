@@ -17,7 +17,7 @@ const SERIAL_DEVICE: &str = "/dev/ttyUSB0";
 
 mod keyboard;
 
-fn main() -> io::Result<()> {
+fn main() -> erika_3004::Result<()> {
     let matches = App::new("erika-cli")
         .arg(
             Arg::new("device")
@@ -88,7 +88,7 @@ fn main() -> io::Result<()> {
 
                 match keyboard::ErikaKeyboard::new() {
                     Ok(mut virtual_keyboard) => loop {
-                        if let Some(character) = interface.read_character() {
+                        if let Some(character) = interface.read_character()? {
                             virtual_keyboard.simulate_keypress(character);
                         }
                     },

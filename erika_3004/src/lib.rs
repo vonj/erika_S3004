@@ -7,11 +7,48 @@ use std::io::{Read, Write};
 
 use std::time::Duration;
 
+use std::fmt::{Display, Formatter};
+
 use serial::prelude::*;
 
 use num_enum::TryFromPrimitive;
 
 use gdrascii_codec::EncodingError;
+
+#[derive(Debug)]
+pub enum ErikaError {
+    IO(io::Error),
+    Serial(serial::Error),
+    UnknownCode(u8),
+    InvalidBellDuration
+}
+
+impl Display for ErikaError {
+    fn fmt(&self, fmt: &mut Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        use ErikaError::*;
+
+        match self {
+            IO(e) => e.fmt(fmt),
+            Serial(e) => e.fmt(fmt),
+            UnknownCode(code) => write!(fmt, "Data received should either be in the codec range or a control code. This may indicate a character missing in the codec implementation. Code was {}", code),
+            InvalidBellDuration => write!(fmt, "Bell duration can not be encoded in a u8")
+        }
+    }
+}
+
+impl From<io::Error> for ErikaError {
+    fn from(e: io::Error) -> ErikaError {
+        ErikaError::IO(e)
+    }
+}
+
+impl From<serial::Error> for ErikaError {
+    fn from(e: serial::Error) -> ErikaError {
+        ErikaError::Serial(e)
+    }
+}
+
+pub type Result<T> = std::result::Result<T, ErikaError>;
 
 /// Boud rates supported by the typewriter
 #[repr(u8)]
@@ -96,7 +133,7 @@ pub struct TypewriterInterface {
 
 impl TypewriterInterface {
     /// Open a new serial connection to a device
-    pub fn new(device: &str) -> io::Result<TypewriterInterface> {
+    pub fn new(device: &str) -> Result<TypewriterInterface> {
         let mut port = serial::open(device)?;
         port.reconfigure(&|settings| {
             settings.set_baud_rate(serial::Baud1200)?;
@@ -120,39 +157,31 @@ impl TypewriterInterface {
         Ok(())
     }
 
-    fn send_enter(&mut self) -> io::Result<()> {
-        self.write_unicode("\n")?;
-        Ok(())
-    }
-
     /// Read a character from a serial device. The character is decoded along the way.
-    pub fn read_character(&mut self) -> Option<InputEvent> {
+    pub fn read_character(&mut self) -> Result<Option<InputEvent>> {
         let mut buf = [0; 3]; // 3 is the maximum number of bytes used for a multi-byte character
         if let Ok(size) = self.read(&mut buf) {
             if size > 0 {
                 return match gdrascii_codec::decode_char(&buf[0..size]) {
-                    Ok(text) => Some(InputEvent::Character(text)),
+                    Ok(text) => Ok(Some(InputEvent::Character(text))),
                     Err(EncodingError::InvalidInput) => {
                         let byte = buf[0].try_into();
                         match byte {
-                            Ok(control_code) => Some(InputEvent::ControlCode(control_code)),
-                            Err(_) => {
-                                eprintln!("Data received should either be in the codec range or a control code. This may indicate a character missing in the codec implementation. Code was {}", buf[0]);
-                                None
-                            }
+                            Ok(control_code) => Ok(Some(InputEvent::ControlCode(control_code))),
+                            Err(_) => Err(ErikaError::UnknownCode(buf[0]))
                         }
                     }
-                    _ => None,
+                    _ => Ok(None),
                 };
             }
         }
 
-        None
+        Ok(None)
     }
 
     /// Sound the bell
-    pub fn bell(&mut self, duration: Duration) -> io::Result<()> {
-        let time_code: Result<u8, _> = (duration.as_millis() / 20).try_into(); // One step on the typewriter is 20ms
+    pub fn bell(&mut self, duration: Duration) -> Result<()> {
+        let time_code = (duration.as_millis() / 20).try_into(); // One step on the typewriter is 20ms
         match time_code {
             Ok(steps) => {
                 self.send_control(ControlCode::Bell)?;
@@ -167,30 +196,30 @@ impl TypewriterInterface {
         }
     }
 
-    pub fn set_tab_size(&mut self, strength: u8) -> io::Result<()> {
+    pub fn set_tab_size(&mut self, strength: u8) -> Result<()> {
         self.send_control(ControlCode::TabStep)?;
         self.file.write_all(&[strength])?;
-        self.send_enter()
+        Ok(())
     }
 
     /// Move the paper. The step size is 1/240.
     /// The steps 3, 4, 5, 6 are invalid, and may not be used.
-    pub fn move_paper(&mut self, step: u8) -> io::Result<()> {
+    pub fn move_paper(&mut self, step: u8) -> Result<()> {
         assert!(!(2..=6).contains(&step));
 
         self.send_control(ControlCode::MovePaper)?;
         self.file.write_all(&[step as u8])?;
-        self.send_enter()
+        Ok(())
     }
 
     /// Split keyboard and printing. Key presses only be sent to the computer, not printed.
-    pub fn enable_remote_mode(&mut self) -> io::Result<()> {
+    pub fn enable_remote_mode(&mut self) -> Result<()> {
         self.send_control(ControlCode::KeyboardOff)?;
         Ok(())
     }
 
     /// Connect keyboard and printing. Key presses will directly result in printing.
-    pub fn disable_remote_mode(&mut self) -> io::Result<()> {
+    pub fn disable_remote_mode(&mut self) -> Result<()> {
         self.send_control(ControlCode::KeyboardOn)?;
         Ok(())
     }
