@@ -6,6 +6,7 @@ use erika_3004::TypewriterInterface;
 
 use std::fs;
 use std::io;
+use std::io::Read;
 
 use std::time::Duration;
 
@@ -69,16 +70,20 @@ fn main() -> erika_3004::Result<()> {
                 println!("Info: Exit by pressing Ctrl + D");
                 interface.enable_remote_mode()?;
 
-                let mut buffer = String::new();
-                let stdin = io::stdin();
+                let mut stdin = io::stdin();
 
                 loop {
-                    let size = stdin.read_line(&mut buffer)?;
-                    if size <= 1 {
+                    let mut buffer = Vec::<u8>::new();
+                    buffer.resize(20, 0);
+
+                    let size = stdin.read(&mut buffer)?;
+                    if size <= 0 {
                         break;
                     }
 
-                    interface.write_unicode(&buffer)?;
+                    let decoded = String::from_utf8(buffer[0..size].to_vec()).unwrap();
+
+                    interface.write_unicode(&decoded)?;
                 }
 
                 interface.disable_remote_mode()?;
