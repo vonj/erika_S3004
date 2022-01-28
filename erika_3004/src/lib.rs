@@ -20,7 +20,7 @@ pub enum ErikaError {
     IO(io::Error),
     Serial(serial::Error),
     UnknownCode(u8),
-    InvalidBellDuration
+    InvalidBellDuration,
 }
 
 impl Display for ErikaError {
@@ -168,7 +168,7 @@ impl TypewriterInterface {
                         let byte = buf[0].try_into();
                         match byte {
                             Ok(control_code) => Ok(Some(InputEvent::ControlCode(control_code))),
-                            Err(_) => Err(ErikaError::UnknownCode(buf[0]))
+                            Err(_) => Err(ErikaError::UnknownCode(buf[0])),
                         }
                     }
                     _ => Ok(None),
@@ -188,11 +188,7 @@ impl TypewriterInterface {
                 self.write_all(&[steps])?;
                 Ok(())
             }
-            Err(e) => {
-                // TODO add our own error type and handle this better
-                eprintln!("{}", e);
-                Ok(())
-            }
+            Err(_) => Err(ErikaError::InvalidBellDuration),
         }
     }
 
