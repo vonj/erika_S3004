@@ -8,6 +8,9 @@ use std::fs;
 use std::io;
 use std::io::Read;
 
+#[cfg(not(target_os = "linux"))]
+use std::process;
+
 use std::time::Duration;
 
 use clap::{App, AppSettings, Arg};
@@ -91,6 +94,11 @@ fn main() -> erika_3004::Result<()> {
             ("keyboard", _) => {
                 interface.enable_remote_mode()?;
                 keyboard::watch_keyboard_input(&mut interface)?;
+            }
+            #[cfg(not(target_os = "linux"))]
+            ("keyboard", _) => {
+                eprintln!("Keyboard input is currently only supported on Linux");
+                process::exit(1);
             }
             ("bell", _) => {
                 interface.bell(Duration::from_secs(1))?;
