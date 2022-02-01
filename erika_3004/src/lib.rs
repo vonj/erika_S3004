@@ -148,19 +148,19 @@ impl TypewriterInterface {
     /// Send a unicode encoded rust string to the typewriter. The data will be encoded with the proprietary codec before sending.
     /// Returns the number of bytes written
     pub fn write_unicode(&mut self, text: &str) -> io::Result<usize> {
-        self.write(&gdrascii_codec::encode(text))
+        self.file.write(&gdrascii_codec::encode(text))
     }
 
     /// Send a control code
     fn send_control(&mut self, code: ControlCode) -> io::Result<()> {
-        self.write_all(&[code as u8])?;
+        self.file.write_all(&[code as u8])?;
         Ok(())
     }
 
     /// Read a character from a serial device. The character is decoded along the way.
     pub fn read_character(&mut self) -> Result<Option<InputEvent>> {
         let mut buf = [0; 3]; // 3 is the maximum number of bytes used for a multi-byte character
-        if let Ok(size) = self.read(&mut buf) {
+        if let Ok(size) = self.file.read(&mut buf) {
             if size > 0 {
                 return match gdrascii_codec::decode_char(&buf[0..size]) {
                     Ok(text) => Ok(Some(InputEvent::Character(text))),
@@ -185,7 +185,7 @@ impl TypewriterInterface {
         match time_code {
             Ok(steps) => {
                 self.send_control(ControlCode::Bell)?;
-                self.write_all(&[steps])?;
+                self.file.write_all(&[steps])?;
                 Ok(())
             }
             Err(_) => Err(ErikaError::InvalidBellDuration),
@@ -218,21 +218,5 @@ impl TypewriterInterface {
     pub fn disable_remote_mode(&mut self) -> Result<()> {
         self.send_control(ControlCode::KeyboardOn)?;
         Ok(())
-    }
-}
-
-impl Read for TypewriterInterface {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.file.read(buf)
-    }
-}
-
-impl Write for TypewriterInterface {
-    fn write(&mut self, data: &[u8]) -> io::Result<usize> {
-        self.file.write(data)
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        self.file.flush()
     }
 }
