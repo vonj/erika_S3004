@@ -12,10 +12,9 @@ use std::time::Duration;
 
 use clap::{App, AppSettings, Arg};
 
-use nix::errno::Errno;
-
 const SERIAL_DEVICE: &str = "/dev/ttyUSB0";
 
+#[cfg(target_os = "linux")]
 mod keyboard;
 
 fn main() -> erika_3004::Result<()> {
@@ -88,27 +87,10 @@ fn main() -> erika_3004::Result<()> {
 
                 interface.disable_remote_mode()?;
             }
+            #[cfg(target_os = "linux")]
             ("keyboard", _) => {
                 interface.enable_remote_mode()?;
-
-                match keyboard::ErikaKeyboard::new() {
-                    Ok(mut virtual_keyboard) => loop {
-                        if let Some(character) = interface.read_character()? {
-                            virtual_keyboard.simulate_keypress(character);
-                        }
-                    },
-                    Err(uinput::Error::Nix(nix::Error::Sys(Errno::EACCES))) => {
-                        eprintln!(
-                            r#"Error: Not enough permissions to simulate keyboard input.
-Either run erika-cli keyboard as root, or add
-
-    KERNEL=="uinput", OWNER="<YOUR USERNAME HERE>"
-
-to /etc/udev/rules.d/erika.rules."#
-                        );
-                    }
-                    Err(e) => panic!("Unexpected error occurred: {:?}", e),
-                }
+                keyboard::watch_keyboard_input(&mut interface)?;
             }
             ("bell", _) => {
                 interface.bell(Duration::from_secs(1))?;

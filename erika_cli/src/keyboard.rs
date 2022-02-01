@@ -5,8 +5,9 @@
 use uinput::event;
 use uinput::event::keyboard::{Key::*, Misc};
 
-use erika_3004::ControlCode;
-use erika_3004::InputEvent;
+use nix::errno::Errno;
+
+use erika_3004::{ControlCode, InputEvent, TypewriterInterface};
 
 pub struct ErikaKeyboard {
     device: uinput::Device,
@@ -145,4 +146,27 @@ impl ErikaKeyboard {
             .synchronize()
             .expect("Failed to simulate keypress");
     }
+}
+
+pub fn watch_keyboard_input(interface: &mut TypewriterInterface) -> erika_3004::Result<()> {
+    match ErikaKeyboard::new() {
+        Ok(mut virtual_keyboard) => loop {
+            if let Some(character) = interface.read_character()? {
+                virtual_keyboard.simulate_keypress(character);
+            }
+        },
+        Err(uinput::Error::Nix(nix::Error::Sys(Errno::EACCES))) => {
+            eprintln!(
+                r#"Error: Not enough permissions to simulate keyboard input.
+Either run erika-cli keyboard as root, or add
+
+    KERNEL=="uinput", OWNER="<YOUR USERNAME HERE>"
+
+to /etc/udev/rules.d/erika.rules."#
+            );
+        }
+        Err(e) => panic!("Unexpected error occurred: {:?}", e),
+    }
+
+    Ok(())
 }
