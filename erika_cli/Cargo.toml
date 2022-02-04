@@ -12,7 +12,7 @@ edition = "2021"
 [dependencies]
 erika_3004 = { version = "*", path = "../erika_3004" }
 gdrascii_codec = { version = "*", path = "../gdrascii_codec" }
-clap = "3"
+clap = { version = "3", default-features = false, features = ["std"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 nix = { version = "0.23", default-features = false }
