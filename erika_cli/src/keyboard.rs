@@ -5,8 +5,6 @@
 use uinput::event;
 use uinput::event::keyboard::{Key::*, Misc};
 
-use nix::errno::Errno;
-
 use erika_3004::{ControlCode, InputEvent, TypewriterInterface};
 
 pub struct ErikaKeyboard {
@@ -155,7 +153,7 @@ pub fn watch_keyboard_input(interface: &mut TypewriterInterface) -> erika_3004::
                 virtual_keyboard.simulate_keypress(character);
             }
         },
-        Err(uinput::Error::Nix(nix::Error::Sys(Errno::EACCES))) => {
+        Err(uinput::Error::Nix(nix::Error::EACCES)) => {
             eprintln!(
                 r#"Error: Not enough permissions to simulate keyboard input.
 Either run erika-cli keyboard as root, or add
