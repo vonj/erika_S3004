@@ -293,7 +293,7 @@ pub enum EncodingError {
 pub type EncodingResult<T> = Result<T, EncodingError>;
 
 /// Encode a single char
-pub fn encode_char(character: char) -> Option<&'static [u8]> {
+pub const fn encode_char(character: char) -> Option<&'static [u8]> {
     utf8_to_gdr_ascii(character)
 }
 
@@ -323,7 +323,7 @@ pub fn encode(text: &str) -> Vec<u8> {
     for c in text.chars() {
         let encoded = match utf8_to_gdr_ascii(c) {
             Some(encoded_char) => encoded_char,
-            None => b"\x35".as_ref(),
+            None => utf8_to_gdr_ascii('?').expect("? is always part of the codec"),
         };
 
         out.extend_from_slice(encoded);
