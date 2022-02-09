@@ -128,7 +128,7 @@ pub enum InputEvent {
 
 /// Interface for receiving and sending text to the typewriter
 pub struct TypewriterInterface {
-    file: serial::SystemPort,
+    port: serial::SystemPort,
 }
 
 impl TypewriterInterface {
@@ -142,25 +142,25 @@ impl TypewriterInterface {
             Ok(())
         })?;
 
-        Ok(TypewriterInterface { file: port })
+        Ok(TypewriterInterface { port })
     }
 
     /// Send a unicode encoded rust string to the typewriter. The data will be encoded with the proprietary codec before sending.
     /// Returns the number of bytes written
     pub fn write_unicode(&mut self, text: &str) -> io::Result<usize> {
-        self.file.write(&gdrascii_codec::encode(text))
+        self.port.write(&gdrascii_codec::encode(text))
     }
 
     /// Send a control code
     fn send_control(&mut self, code: ControlCode) -> io::Result<()> {
-        self.file.write_all(&[code as u8])?;
+        self.port.write_all(&[code as u8])?;
         Ok(())
     }
 
     /// Read a character from a serial device. The character is decoded along the way.
     pub fn read_character(&mut self) -> Result<Option<InputEvent>> {
         let mut buf = [0; 3]; // 3 is the maximum number of bytes used for a multi-byte character
-        if let Ok(size) = self.file.read(&mut buf) {
+        if let Ok(size) = self.port.read(&mut buf) {
             if size > 0 {
                 return match gdrascii_codec::decode_char(&buf[0..size]) {
                     Ok(text) => Ok(Some(InputEvent::Character(text))),
@@ -185,7 +185,7 @@ impl TypewriterInterface {
         match time_code {
             Ok(steps) => {
                 self.send_control(ControlCode::Bell)?;
-                self.file.write_all(&[steps])?;
+                self.port.write_all(&[steps])?;
                 Ok(())
             }
             Err(_) => Err(ErikaError::InvalidBellDuration),
@@ -194,7 +194,7 @@ impl TypewriterInterface {
 
     pub fn set_tab_size(&mut self, strength: u8) -> Result<()> {
         self.send_control(ControlCode::TabStep)?;
-        self.file.write_all(&[strength])?;
+        self.port.write_all(&[strength])?;
         Ok(())
     }
 
@@ -204,7 +204,7 @@ impl TypewriterInterface {
         assert!(!(2..=6).contains(&step));
 
         self.send_control(ControlCode::MovePaper)?;
-        self.file.write_all(&[step as u8])?;
+        self.port.write_all(&[step as u8])?;
         Ok(())
     }
 

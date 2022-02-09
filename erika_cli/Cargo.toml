@@ -16,4 +16,4 @@ clap = { version = "3", default-features = false, features = ["std"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 nix = { version = "0.23", default-features = false }
-uinput = { default-features = false, git = "https://github.com/jbbgameich/rust-uinput", branch = "update-nix" }
+uinput = { default-features = false, git = "https://github.com/jbbgameich/rust-uinput", branch = "clippy" }

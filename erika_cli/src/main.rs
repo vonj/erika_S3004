@@ -79,7 +79,7 @@ fn main() -> erika_3004::Result<()> {
                     buffer.resize(20, 0);
 
                     let size = stdin.read(&mut buffer)?;
-                    if size <= 0 {
+                    if size == 0 {
                         break;
                     }
 
