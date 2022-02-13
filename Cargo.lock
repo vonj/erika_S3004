@@ -257,7 +257,7 @@ checksum = "0066c8d12af8b5acd21e00547c3797fde4e8677254a7ee429176ccebbe93dd80"
 [[package]]
 name = "uinput"
 version = "0.1.3"
-source = "git+https://github.com/jbbgameich/rust-uinput?branch=clippy#ad7e76e99f12ed12f8ff27028aaee22e124581bf"
+source = "git+https://github.com/jbbgameich/rust-uinput?branch=edition-2021#6bfcc6b41eec785fc95e2d2020db9b847891db0e"
 dependencies = [
  "custom_derive",
  "enum_derive",
