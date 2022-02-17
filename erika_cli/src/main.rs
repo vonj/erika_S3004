@@ -13,7 +13,7 @@ use std::process;
 
 use std::time::Duration;
 
-use clap::{App, AppSettings, Arg};
+use clap::{Arg, Command};
 
 const SERIAL_DEVICE: &str = "/dev/ttyUSB0";
 
@@ -21,7 +21,7 @@ const SERIAL_DEVICE: &str = "/dev/ttyUSB0";
 mod keyboard;
 
 fn main() -> erika_3004::Result<()> {
-    let matches = App::new("erika-cli")
+    let matches = Command::new("erika-cli")
         .arg(
             Arg::new("device")
                 .short('d')
@@ -29,20 +29,21 @@ fn main() -> erika_3004::Result<()> {
                 .help("Serial device to use, usually /dev/ttyUSB0")
                 .default_value(SERIAL_DEVICE),
         )
-        .setting(AppSettings::SubcommandRequiredElseHelp)
+        .subcommand_required(true)
+        .arg_required_else_help(true)
         .subcommand(
-            App::new("print-file")
+            Command::new("print-file")
                 .about("Print a text file")
                 .arg(Arg::new("NAME").required(true)),
         )
-        .subcommand(App::new("keyboard").about(
+        .subcommand(Command::new("keyboard").about(
             "Connect the typewriter as a keyboard. You need to run erika-cli enable-keyboard afterwards to make the machine print again.",
         ))
-        .subcommand(App::new("print").about("Print text from stdin"))
-        .subcommand(App::new("bell").about("Sound the bell"))
-        .subcommand(App::new("enable-keyboard").about("Re-enable direct printing of key presses"))
+        .subcommand(Command::new("print").about("Print text from stdin"))
+        .subcommand(Command::new("bell").about("Sound the bell"))
+        .subcommand(Command::new("enable-keyboard").about("Re-enable direct printing of key presses"))
         .subcommand(
-            App::new("move-paper")
+            Command::new("move-paper")
                 .arg(
                     Arg::new("STEP")
                         .help("Value needs to be 1 or 2")
