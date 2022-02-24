@@ -1,5 +1,7 @@
 # Erika s3004 Computer Interface
 
+**this is a copy of the original repository at: https://codeberg.org/jbb/erika_S3004**
+
 ![Build status](https://ci.jbb.ghsq.ga/api/badges/jbb/erika_S3004/status.svg)
 
 Tested on a SIGMA SM 8200i, which is supposedly the same hardware just under the brand name used in Western Germany.
