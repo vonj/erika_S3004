@@ -14,14 +14,19 @@ pub struct ErikaKeyboard {
 fn needs_shift_pressed(input: InputEvent) -> bool {
     matches!(input, InputEvent::Character(character) if
         character.is_uppercase()
-            || matches!(character, '!' | '"' | '§' | '%' | '&' | '/' | '(' | ')' | '=' | '?' | '`' | '_' | ';' | ':' | '\'' | '*'))
+            || matches!(character, '!' | '"' | '§' | '$' | '%' | '&' | '/' | '(' | ')' | '=' | '?' | '`' | '_' | ';' | ':' | '\'' | '*'))
+}
+
+fn needs_ctrl_pressed(input: InputEvent) -> bool {
+    matches!(input, InputEvent::Character(character) if
+        character < '\x20')
 }
 
 impl ErikaKeyboard {
     pub fn new() -> uinput::Result<ErikaKeyboard> {
         Ok(ErikaKeyboard {
             device: uinput::default()?
-                .name("Erika 3004")?
+                .name("Erika 300x")?
                 .event(uinput::event::Keyboard::All)?
                 .create()?,
         })
@@ -55,12 +60,16 @@ impl ErikaKeyboard {
                 ControlCode::HalfstepUp => Up,
                 ControlCode::HalfstepDown => Down,
                 ControlCode::HalfstepLeft => Left,
+                ControlCode::HalfstepRight => Right,
                 ControlCode::MarginAllDel => Home,
                 ControlCode::Relocate => End,
                 ControlCode::MarginSet => Esc,
                 ControlCode::Row1 => return,
                 ControlCode::GetPaper => return,
                 ControlCode::Chars10PerInch => return,
+                ControlCode::Enter => Enter,
+		        ControlCode::Backstep => Insert,
+		        ControlCode::Tab => Tab,
                 _ => {
                     eprintln!("Unimplemented control code: {:?}", code);
                     return;
@@ -82,43 +91,43 @@ impl ErikaKeyboard {
                 'Ä' | 'ä' => Apostrophe,
                 'Ö' | 'ö' => SemiColon,
                 '+' | '*' => RightBrace,
-                '\t' => Tab,
-                'Q' | 'q' => Q,
-                'W' | 'w' => W,
-                'E' | 'e' => E,
-                'R' | 'r' => R,
-                'T' | 't' => T,
-                'Y' | 'y' => Z,
-                'U' | 'u' => U,
-                'I' | 'i' => I,
-                'O' | 'o' => O,
-                'P' | 'p' => P,
-                '\n' => Enter,
-                'A' | 'a' => A,
-                'S' | 's' => S,
-                'D' | 'd' => D,
-                'F' | 'f' => F,
-                'G' | 'g' => G,
-                'H' | 'h' => H,
-                'J' | 'j' => J,
-                'K' | 'k' => K,
-                'L' | 'l' => L,
+                'Q' | 'q' | '\x11' => Q,
+                'W' | 'w' | '\x17' => W,
+                'E' | 'e' | '\x05' => E,
+                'R' | 'r' | '\x12' => R,
+                'T' | 't' | '\x14' => T,
+                'Y' | 'y' | '\x1A' => Z,
+                'U' | 'u' | '\x15' => U,
+                'I' | 'i' | '\x09' => I,
+                'O' | 'o' | '\x0F' => O,
+                'P' | 'p' | '\x10' => P,
+                'A' | 'a' | '\x01' => A,
+                'S' | 's' | '\x13' => S,
+                'D' | 'd' | '\x04' => D,
+                'F' | 'f' | '\x06' => F,
+                'G' | 'g' | '\x07' => G,
+                'H' | 'h' | '\x08' => H,
+                'J' | 'j' | '\x0A' => J,
+                'K' | 'k' | '\x0B' => K,
+                'L' | 'l' | '\x0C' => L,
                 ';' => Comma,
                 '\'' | '#' => BackSlash,
-                'Z' | 'z' => Y,
-                'X' | 'x' => X,
-                'C' | 'c' => C,
-                'V' | 'v' => V,
-                'B' | 'b' => B,
-                'N' | 'n' => N,
-                'M' | 'm' => M,
+                'Z' | 'z' | '\x19' => Y,
+                'X' | 'x' | '\x18' => X,
+                'C' | 'c' | '\x03' => C,
+                'V' | 'v' | '\x16' => V,
+                'B' | 'b' | '\x02' => B,
+                'N' | 'n' | '\x0E' => N,
+                'M' | 'm' | '\x0D' => M,
                 ',' => Comma,
                 '.' | ':' => Dot,
                 '-' | '_' => Slash,
                 ' ' => Space,
                 '´' => Equal,
                 '`' => Equal,
-                '\x08' => Right,
+                // '\t' => Tab,
+                // '\n' => Enter,
+                // '\x08' => Right,
                 _ => {
                     println!("keyboard: Unimplemented character code {:?}", character);
                     return;
@@ -132,7 +141,19 @@ impl ErikaKeyboard {
                 .expect("Failed to press shift key");
         }
 
-        self.device.click(&keyboard_event).unwrap();
+        if needs_ctrl_pressed(input) {
+            self.device
+                .press(&LeftControl)
+                .expect("Failed to press ctrl key");
+        }	
+
+	self.device.click(&keyboard_event).unwrap();
+
+        if needs_ctrl_pressed(input) {
+            self.device
+                .release(&LeftControl)
+                .expect("Failed to release ctrl key");
+        }
 
         if needs_shift_pressed(input) {
             self.device

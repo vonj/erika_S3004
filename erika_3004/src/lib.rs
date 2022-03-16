@@ -65,10 +65,13 @@ pub enum BoudRate {
 #[derive(TryFromPrimitive, Debug, Clone, Copy)]
 pub enum ControlCode {
     // numbers before here are covered by the text codec
-    HalfstepRight = 0x73,
-    HalfstepLeft = 0x74,
+    Backstep = 0x72,
+    HalfStepBack = 0x74,
     HalfstepDown = 0x75,
     HalfstepUp = 0x76,
+    Enter = 0x77,
+    Formfeed = 0x78,
+    Tab = 0x79,
     TabSet = 0x7a,
     TabDel,
     TabAllDel,
@@ -76,8 +79,10 @@ pub enum ControlCode {
     MarginSet,
     MarginDel,
     MarginAllDel,
-    MarginUnset,
-    RowSizeDown,
+    HalfstepLeft = 0x81,
+    HalfstepRight = 0x82,
+    /// MarginUnset,
+    /// RowSizeDown,
     RowSizeUp,
     GetPaper,
     Row1,
@@ -115,8 +120,14 @@ pub enum ControlCode {
     KeyboardInput = 0xAB,
     KeyboardInput2,
     DeleteRelocate,
-    DeleteLastChar,
+    Code = 0xBB,
+    DeleteLastChar = 0xFC,
     Relocate,
+    JustifyBlock = 0xF8,
+    Display = 0xFE,
+    DirectPrint = 0xF9,
+    Autowrap = 0xFF,
+    NoAutowrap = 0xFA,
 }
 
 /// Classification of an input event
@@ -159,9 +170,17 @@ impl TypewriterInterface {
 
     /// Read a character from a serial device. The character is decoded along the way.
     pub fn read_character(&mut self) -> Result<Option<InputEvent>> {
-        let mut buf = [0; 3]; // 3 is the maximum number of bytes used for a multi-byte character
+        let mut buf = [0; 1]; // removing multi-byte character, input is _not_ multibyte! (just BB as escape for code)
         if let Ok(size) = self.port.read(&mut buf) {
             if size > 0 {
+        // some debug info
+		eprintln!("s3004 {}:",size); 
+		let mut i = 0;
+		while i < size {
+			eprintln!("{}",buf[i]);
+			i += 1;
+		}
+		eprintln!("\n");
                 return match gdrascii_codec::decode_char(&buf[0..size]) {
                     Ok(text) => Ok(Some(InputEvent::Character(text))),
                     Err(EncodingError::InvalidInput) => {

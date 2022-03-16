@@ -11,10 +11,10 @@ use alloc::{string::String, vec::Vec};
 const fn utf8_to_gdr_ascii(c: char) -> Option<&'static [u8]> {
     Some(match c {
         // control characters
-        '\x08' => b"\x72", // backspace
-        '\t' => b"\x79",
-        '\n' => b"\x77",
-        '\r' => b"\x78",
+        // '\x08' => b"\x72", // backspace
+        // '\t' => b"\x79",
+        // '\n' => b"\x77",
+        // '\r' => b"\x78",
 
         // punctuation
         ' ' => b"\x71",
@@ -145,11 +145,39 @@ const fn utf8_to_gdr_ascii(c: char) -> Option<&'static [u8]> {
 
 const fn gdr_ascii_to_utf8(bytes: &[u8]) -> Option<char> {
     Some(match bytes {
+    	// control keys
+        b"\xC2" => '\x01',
+        b"\xD7" => '\x02',
+        b"\xCB" => '\x03',
+        b"\xCA" => '\x04',
+        b"\xC9" => '\x05',
+        b"\xCE" => '\x06',
+        b"\xD2" => '\x07',
+        b"\xD6" => '\x08',
+        b"\xDD" => '\x09',
+        b"\xDA" => '\x0A',
+        b"\xDE" => '\x0B',
+        b"\xE2" => '\x0C',
+        b"\xD3" => '\x0D',
+        b"\xDB" => '\x0E',
+        b"\xE1" => '\x0F',
+        b"\xE5" => '\x10',
+        b"\xC1" => '\x11',
+        b"\xCD" => '\x12',
+        b"\xC6" => '\x13',
+        b"\xD1" => '\x14',
+        b"\xD9" => '\x15',
+        b"\xCF" => '\x16',
+        b"\xC5" => '\x17',
+        b"\xC7" => '\x18',
+        b"\xC3" => '\x19',
+        b"\xD5" => '\x1A',
+
         // control characters
-        b"\x72" => '\x08',
-        b"\x79" => '\t',
-        b"\x77" => '\n',
-        b"\x78" => '\r',
+        // b"\x72" => '\x08',
+        // b"\x79" => '\t',
+        // b"\x77" => '\n',
+        // b"\x78" => '\r',
 
         // punctuation
         b"\x71" => ' ',
@@ -275,6 +303,14 @@ const fn gdr_ascii_to_utf8(bytes: &[u8]) -> Option<char> {
 
         // combined chars
         b"\x20\x72\x2E" => '€',
+
+	// b"\x85" => ' ',
+	// b"\x88" => ' ',
+	// b"\xF8" => ' ',
+	// b"\xF9" => ' ',
+	// b"\xFA" => ' ',
+	// b"\xFE" => ' ',
+	// b"\xFF" => ' ',
 
         _ => return None,
     })
