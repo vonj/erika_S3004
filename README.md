@@ -1,7 +1,19 @@
-# Erika s3004 Computer Interface
+# Erika s3004/s3006 Computer Interface
 
 **this is a copy of the original repository at: https://codeberg.org/jbb/erika_S3004**
 
+I just removed multibyte from keyboard implementation, since this is not the case.
+
+Added some control codes, added CTRL-A to CTRL-Z, now it can really be used. Mode-button on Erika 3006 is used as CTRL.
+
+This version now runs also with Erika 3006 as keyboard too.
+
+I do not plan to finish this, I will follow my first implementation in python instead.
+
+regards
+Sven
+
+---
 Tested on a SIGMA SM 8200i, which is supposedly the same hardware just under the brand name used in Western Germany.
 
 This project is based on information from [Chaostreff Potsdam](https://github.com/Chaostreff-Potsdam/erika3004).
